@@ -32,30 +32,42 @@
 **Request-line enviada:**
 
 ```http
-[colar aqui a linha inicial do request, ex: GET / HTTP/1.1]
+GET / HTTP/1.1
 ```
 
 **Status-line recebida:**
 
 ```http
-[colar aqui, ex: HTTP/1.1 200 OK]
+HTTP/1.1 200 OK
 ```
 
 ### Pergunta 1.1
 > Quantos cabeçalhos o navegador enviou no request? Liste-os.
 
 **Resposta:**
-[número total]
+9 cabeçalhos.
 
 Cabeçalhos:
-- [cabeçalho 1]
-- [cabeçalho 2]
-- ...
+- Host
+- Connection
+- Upgrade-Insecure-Requests
+- User-Agent
+- Accept
+- Accept-Encoding
+- Accept-Language
 
 ### Pergunta 1.2
 > Qual foi o `Content-Length` da resposta? Se ele não apareceu, registre `Transfer-Encoding`, versão do protocolo ou outro indício observado. O corpo retornado é HTML, texto puro, JSON ou binário? Como você descobriu?
 
-**Resposta:** [...]
+**Resposta:** Transfer-Encoding: chunked
+
+Também foi identificado: Content-Type: text/html
+                         Content-Encoding: gzip
+
+Observando "Content-Type: text/html", é possível concluir que o corpo retornado é HTML.
+
+Além disso, a resposta aparece comprimida porque o servidor utilizou: Content-Encoding: gzip
+Por isso o conteúdo exibido no Fiddler aparece como caracteres binários/ilegíveis até ser decodificado.
 
 ---
 
@@ -73,40 +85,51 @@ Cabeçalhos:
 
 | Cabeçalho    | Valor                    |
 |--------------|--------------------------|
-| `Host`       | [...]                    |
-| `User-Agent` | [...]                    |
-| `Accept`     | [...]                    |
+| `Host`       | httpbin.org              |
+| `User-Agent` | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36                                                    |
+| `Accept`     | text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7                       |
 
 **Campos do JSON de resposta:**
 
 ```json
 {
-  "args":    [colar valor],
-  "headers": [colar valor resumido],
-  "origin":  [colar valor]
+  "args": {
+    "aluno": "alexandre_silva",
+    "curso": "redes"
+  },
+
+  "headers": {
+    "Host": "httpbin.org",
+    "User-Agent": "Mozilla/5.0...",
+    "Accept": "text/html,application/xhtml+xml..."
+  },
+
+  "origin": "201.87.98.203"
 }
 ```
 
 ### Pergunta 2.1
 > O valor do campo `origin` corresponde a qual elemento da rede? Por que normalmente não é o IP local?
 
-**Resposta:** [...]
+**Resposta:** O campo origin corresponde ao endereço IP público que o servidor enxerga como origem da requisição.
+Normalmente ele não mostra o IP local da máquina (como 192.168.x.x ou 10.x.x.x) porque a rede utiliza NAT (Network Address Translation) no roteador. Assim, os dispositivos da rede interna acessam a internet usando um único IP público fornecido pelo provedor.
 
 ### Pergunta 2.2
 > Compare o `User-Agent` enviado com o que aparece no JSON da resposta. Coincidem?
 
-**Resposta:** [...]
+**Resposta:** Sim. O valor do User-Agent enviado na requisição coincide com o valor retornado no JSON da resposta.
 
 ### Pergunta 2.3
 > Em `http://httpbin.org/headers`, liste até três cabeçalhos que o servidor vê mas **não aparecem** no Raw do request. De onde vêm? Se não encontrar três, explique por que o resultado pode variar.
 
 **Resposta:**
 
-| Cabeçalho visto pelo servidor | Origem provável | Observação |
-|-------------------------------|-----------------|------------|
-| [...]                         | [...]           | [...]      |
-| [...]                         | [...]           | [...]      |
-| [...]                         | [...]           | [...]      |
+| Cabeçalho visto pelo servidor | Origem provável               | Observação                                                               |
+| ----------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
+| `X-Amzn-Trace-Id`             | Infraestrutura da Amazon AWS  | Adicionado automaticamente para rastreamento da requisição               |
+| `Via`                         | Proxy/CDN intermediária       | Pode ser inserido por servidores intermediários entre cliente e servidor |
+| `X-Forwarded-For`             | Proxy ou balanceador de carga | Usado para informar o IP original do cliente                             |
+
 
 ---
 
@@ -117,39 +140,38 @@ Cabeçalhos:
 **Request-line do POST:**
 
 ```http
-[colar aqui]
+POST /post HTTP/1.1
 ```
 
 **Cabeçalhos do request:**
 
-| Cabeçalho        | Valor |
-|------------------|-------|
-| `Content-Type`   | [...] |
-| `Content-Length` | [...] |
+| Cabeçalho        | Valor                               |
+| ---------------- | ----------------------------------- |
+| `Content-Type`   | `application/x-www-form-urlencoded` |
+| `Content-Length` | `190`                               |
+
 
 **Corpo completo do request:**
 
 ```
-[colar aqui o body enviado]
+custname=Alexandre+Silva+Jo%C3%A3o+Louren%C3%A7o&custtel=123456789&custemail=alexandre.silva.joao.05%40gmail.com&size=medium&topping=bacon&topping=onion
 ```
 
 **Trecho do JSON de resposta (campo `form`):**
 
 ```json
-"form": {
-  [colar aqui]
-}
+"form": {}
 ```
 
 ### Pergunta 3.1
 > Qual o formato do corpo? Como esse formato codifica caracteres especiais (espaço, acentos)?
 
-**Resposta:** [...]
+**Resposta:** application/x-www-form-urlencoded
 
 ### Pergunta 3.2
 > Comparando **Request → WebForms** e **Request → Raw**: qual das duas corresponde literalmente aos bytes enviados no socket TCP?
 
-**Resposta:** [...]
+**Resposta:** Request → WebForms
 
 ### Pergunta 3.3 — Composer
 > Envie manualmente via Composer um `POST` para `http://httpbin.org/post` com JSON. Registre a resposta. Qual campo do JSON confirma que o servidor interpretou o JSON?
@@ -164,7 +186,11 @@ Cabeçalhos:
 }
 ```
 
-**Resposta:** [...]
+**Resposta:** 
+data={
+  "nome": "Alexandre",
+  "idade": 22
+}
 
 ---
 
@@ -172,30 +198,33 @@ Cabeçalhos:
 
 **Captura de tela (lista do Fiddler com as 7 sessões):** `evidencias/atv4_lista.png`
 
-| # | Método | URL | Status-line | `Content-Length` / `Transfer-Encoding` | Body presente? |
-|---|--------|-----|-------------|-----------------------------------------|----------------|
-| 1 | GET    | `http://httpbin.org/status/200` | [...] | [...] | [sim/não] |
-| 2 | GET    | `http://httpbin.org/redirect-to?status_code=301&url=/get` | [...] | [...] | [sim/não] |
-| 3 | GET    | `http://httpbin.org/status/404` | [...] | [...] | [sim/não] |
-| 4 | GET    | `http://httpbin.org/status/418` | [...] | [...] | [sim/não] |
-| 5 | GET    | `http://httpbin.org/status/500` | [...] | [...] | [sim/não] |
-| 6 | GET    | `http://httpbin.org/status/503` | [...] | [...] | [sim/não] |
-| 7 | GET    | `http://httpbin.org/cache` com `If-Modified-Since` | [...] | [...] | [sim/não] |
+#,Método,URL,Status-line,Content-Length / Transfer-Encoding,Body presente?
+1 | GET | .../status/200,HTTP/1.1 200 OK | Content-Length: 0 | Não
+2 | GET | .../redirect-to?status_code=301... | HTTP/1.1 301 MOVED PERMANENTLY | Content-Length: 0 | Não
+3 | GET | .../status/404 | HTTP/1.1 404 NOT FOUND | Content-Length: 0 | Não
+4 | GET | .../status/418 | HTTP/1.1 418 I'M A TEAPOT | Content-Length: 135 | Sim
+5 | GET | .../status/500 | HTTP/1.1 500 INTERNAL SERVER ERROR | Content-Length: 0 | Não
+6 | GET | .../status/503 | HTTP/1.1 503 SERVICE UNAVAILABLE | Content-Length: 0 | Não
+7 | GET | .../cache (+ headers) | HTTP/1.1 304 NOT MODIFIED | (Vazio / Não enviado) | Não
 
 ### Pergunta 4.1
 > Em qual dos status o corpo está ausente/tamanho zero? Isso é obrigatório pela especificação ou depende do servidor?
 
-**Resposta:** [...]
+**Resposta:** os status 200, 301, 304, 404, 500 e 503 apresentaram corpo tamanho zero. Se for um status 204 ou 304, o corpo deve ser zero. Para os demais (200, 404, 5xx), o tamanho do corpo fica a critério do desenvolvedor ou do servidor web utilizado.
 
 ### Pergunta 4.2
 > No `301`, qual cabeçalho da resposta informa para onde ir? O que aconteceria se estivesse ausente?
 
-**Resposta:** [...]
+**Resposta:** No campo Response Headers, dentro da seção Transport está o cabeçalho Location: /get.
 
 ### Pergunta 4.3
 > Diferença semântica entre `200`, `304` e `404` do ponto de vista do cache do navegador.
 
-**Resposta:** [...]
+**Resposta:** 200 OK (Fresh): O navegador entende que o recurso é novo ou que sua versão local expirou. Ele baixa o conteúdo completo do servidor e atualiza o cache com essa nova cópia para usos futuros.
+
+304 Not Modified (Revalidated): O navegador pergunta ao servidor: "Eu tenho a versão X, ela ainda vale?". O servidor responde 304 para dizer que nada mudou. O navegador não baixa o arquivo novamente e usa a cópia que já está no cache, economizando banda.
+
+404 Not Found (Dead/Invalid): O recurso não existe mais no servidor. Para o cache, isso geralmente sinaliza que qualquer cópia antiga armazenada localmente é inválida ou obsoleta, interrompendo a entrega daquele conteúdo.
 
 ---
 
@@ -205,18 +234,31 @@ Cabeçalhos:
 
 | Cabeçalho                    | Req/Resp | Valor capturado | Função em uma frase |
 |------------------------------|----------|------------------|----------------------|
-| `Host`                       | [...]    | [...]            | [...]                |
-| `User-Agent`                 | [...]    | [...]            | [...]                |
-| `Accept`                     | [...]    | [...]            | [...]                |
-| `Accept-Encoding`            | [...]    | [...]            | [...]                |
-| `Cookie`                     | [...]    | [...]            | [...]                |
-| `Server`                     | [...]    | [...]            | [...]                |
-| `Content-Type`               | [...]    | [...]            | [...]                |
-| `Content-Encoding`           | [...]    | [...]            | [...]                |
-| `Set-Cookie`                 | [...]    | [...]            | [...]                |
-| `Cache-Control`              | [...]    | [...]            | [...]                |
+| `Host`                       | Req    | httpbin.org            | [...]                |
+| `User-Agent`                 | Req    | Mozilla/5.0 (Windows NT 10.0; Win64; x64)...    | [...]                |
+| `Accept`                     | Req    | [...]            | [...]                |
+| `Accept-Encoding`            | Req    | [...]            | [...]                |
+| `Cookie`                     | Req    | [...]            | [...]                |
+| `Server`                     | Req    | [...]            | [...]                |
+| `Content-Type`               | Req    | [...]            | [...]                |
+| `Content-Encoding`           | Req    | [...]            | [...]                |
+| `Set-Cookie`                 | Req    | [...]            | [...]                |
+| `Cache-Control`              | Req    | [...]            | [...]                |
 | `Strict-Transport-Security`  | Não esperado em HTTP — ver Pergunta 5.3 | — | — |
 
+| Cabeçalho                  | Req/Resp | Valor capturado                                            | Função em uma frase                                                                |
+|----------------------------|:--------:|------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `Host`                     |   Req    | httpbin.org                                                | Indica o domínio do servidor para o qual a requisição está sendo enviada.          |
+| `User-Agent`               |   Req    | Mozilla/5.0 (Windows NT 10.0; Win64; x64)...               | Identifica o navegador e o sistema operacional que originaram a requisição.        |
+| `Accept`                   |   Req    | text/html,application/xhtml+xml,application/xml;q=0.9...   | Informa ao servidor quais tipos de conteúdo (formatos) o cliente consegue ler.    |
+| `Accept-Encoding`          |   Req    | gzip, deflate                                              | Indica os algoritmos de compressão de dados que o cliente suporta receber.         |
+| `Cookie`                   |   Req    | teste=1                                                    | Envia ao servidor dados armazenados anteriormente para manter o estado da sessão.  |
+| `Server`                   |   Resp   | gunicorn/19.9.0                                            | Identifica o software de servidor web utilizado para processar a requisição.       |
+| `Content-Type`             |   Resp   | application/json                                           | Especifica o tipo de mídia (formato) do corpo da mensagem enviada pelo servidor.   |
+| `Content-Encoding`          |   Resp   | gzip                                                       | Indica que o corpo da resposta foi compactado usando o algoritmo gzip.             |
+| `Set-Cookie`               |   Resp   | teste=1                                                    | Solicita ao navegador que armazene um dado para ser enviado em requisições futuras. |
+| `Cache-Control`            |   Resp   | max-age=3600                                               | Define por quanto tempo o navegador deve manter o recurso em cache local.          |
+| `Strict-Transport-Security`|   ---    | Não esperado em HTTP — ver Pergunta 5.3                    | —                                                                                  |
 ### Pergunta 5.1
 > `Content-Encoding: gzip`/`br` apareceu? Compare `Content-Length`, quando presente, com o conteúdo visível. O que explica a diferença?
 
