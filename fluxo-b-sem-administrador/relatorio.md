@@ -486,11 +486,11 @@ Por quê: Essas ferramentas permitem programar regras automáticas para filtrar,
 
 **Parágrafo: por que a remoção de certificado é dispensável neste fluxo e por que seria obrigatória para o aluno administrador:**
 
-[redigir, em até 5 linhas, com base na seção 4.6 do readme.md]
+No Fluxo B, a remoção do certificado não é necessária porque não houve instalação do certificado raiz do Fiddler nem interceptação HTTPS com decriptação do tráfego. Nesse cenário, o proxy apenas observa informações externas ao túnel TLS, sem ganhar capacidade de quebrar a confidencialidade das conexões. Já para o aluno administrador, no Fluxo A, a remoção é obrigatória porque o certificado raiz instalado concede ao Fiddler poder para interceptar e decifrar qualquer conexão HTTPS da máquina, representando um risco de segurança caso permaneça confiável após o laboratório.
 
-- [ ] HTTPS-First Mode / HTTPS-Only Mode reabilitado no navegador
-- [ ] Fiddler fechado (porta de proxy liberada)
-- [ ] Configuração de proxy removida do navegador (se aplicável)
+- [X] HTTPS-First Mode / HTTPS-Only Mode reabilitado no navegador
+- [X] Fiddler fechado (porta de proxy liberada)
+- [X] Configuração de proxy removida do navegador (se aplicável)
 
 ---
 
