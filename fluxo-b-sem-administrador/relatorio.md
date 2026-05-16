@@ -233,20 +233,6 @@ data={
 
 **Captura de tela (Inspectors → Headers):** `evidencias/atv5_headers.png`
 
-| Cabeçalho                    | Req/Resp | Valor capturado | Função em uma frase |
-|------------------------------|----------|------------------|----------------------|
-| `Host`                       | Req    | httpbin.org            | [...]                |
-| `User-Agent`                 | Req    | Mozilla/5.0 (Windows NT 10.0; Win64; x64)...    | [...]                |
-| `Accept`                     | Req    | [...]            | [...]                |
-| `Accept-Encoding`            | Req    | [...]            | [...]                |
-| `Cookie`                     | Req    | [...]            | [...]                |
-| `Server`                     | Req    | [...]            | [...]                |
-| `Content-Type`               | Req    | [...]            | [...]                |
-| `Content-Encoding`           | Req    | [...]            | [...]                |
-| `Set-Cookie`                 | Req    | [...]            | [...]                |
-| `Cache-Control`              | Req    | [...]            | [...]                |
-| `Strict-Transport-Security`  | Não esperado em HTTP — ver Pergunta 5.3 | — | — |
-
 | Cabeçalho                  | Req/Resp | Valor capturado                                            | Função em uma frase                                                                |
 |----------------------------|:--------:|------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `Host`                     |   Req    | httpbin.org                                                | Indica o domínio do servidor para o qual a requisição está sendo enviada.          |
@@ -263,17 +249,25 @@ data={
 ### Pergunta 5.1
 > `Content-Encoding: gzip`/`br` apareceu? Compare `Content-Length`, quando presente, com o conteúdo visível. O que explica a diferença?
 
-**Resposta:** [...]
+**Resposta:** Sim, o cabeçalho Content-Encoding: gzip apareceu na sessão 16 (referente ao endpoint /gzip). Ao comparar, nota-se que o Content-Length (633 bytes na captura) é significativamente menor do que o tamanho do texto quando descompactado e visualizado na aba TextView.
+
+A diferença explica-se pelo uso de algoritmos de compressão. O servidor compacta o corpo da resposta para reduzir o consumo de banda e acelerar a transmissão; o navegador (ou o Fiddler) recebe os dados binários comprimidos e os expande apenas no momento da exibição.
 
 ### Pergunta 5.2
 > Cliente envia `Accept: application/json` mas o recurso só existe em `text/html`. Qual status code esperar?
 
-**Resposta:** [...]
+**Resposta:** Segundo a especificação do protocolo (RFC 9110), o status code esperado é o 406 Not Acceptable.
+
+Este código indica que o servidor não consegue gerar uma resposta que satisfaça os critérios de negociação de conteúdo definidos nos cabeçalhos Accept da requisição. Vale notar que, na prática, muitos servidores ignoram essa restrição e enviam o conteúdo disponível (200 OK com HTML) para evitar que o usuário receba uma página de erro.
 
 ### Pergunta 5.3
 > `Strict-Transport-Security` apareceu nas respostas HTTP? Por que esse cabeçalho está ausente neste fluxo? (Consulte a RFC 6797.) Qual é seu papel contra downgrades para HTTP puro?
 
-**Resposta:** [...]
+**Resposta:** Não, o cabeçalho HSTS (Strict-Transport-Security) não apareceu nas capturas.
+
+Por que está ausente: De acordo com a RFC 6797, esse cabeçalho só é válido e processado pelos navegadores quando enviado através de uma conexão segura (HTTPS). Como os testes foram realizados via HTTP puro (porta 80), o servidor não o envia, e se enviasse, o navegador deveria ignorá-lo por segurança.
+
+Papel contra downgrades: O papel do HSTS é forçar o navegador a se comunicar com o domínio exclusivamente via HTTPS por um período determinado. Isso protege o usuário contra ataques de "SSL Strip" (ou downgrade), impedindo que um invasor intercepte a conexão e force o tráfego a voltar para o HTTP inseguro, onde os dados circulam em texto claro.
 
 ---
 
@@ -285,22 +279,28 @@ data={
 ### Pergunta 6.1
 > Que método HTTP aparece na sessão do `https://httpbin.org/get`? O que ele faz e por que existe?
 
-**Resposta:** [...]
+**Resposta:** O CONNECT é um método especial utilizado para estabelecer um túnel bidirecional (geralmente através de um servidor proxy ou, neste caso, o próprio Fiddler). Em vez de pedir um arquivo específico, o cliente diz ao proxy: "Por favor, abra um canal direto com o host httpbin.org na porta 443 e apenas repasse os bits para mim".
+
+Sua existência é fundamental para a segurança da web moderna (HTTPS):
+
+Preservação da Criptografia: Como o tráfego HTTPS é criptografado ponto a ponto, um proxy comum não consegue ler os cabeçalhos internos (como o GET /get). O CONNECT permite que o proxy crie uma "ponte" cega onde o handshake TLS/SSL acontece diretamente entre o seu navegador e o servidor de destino.
+
+Neutralidade do Proxy: Ele permite que tráfegos que o proxy não entende (como dados binários criptografados) passem pela rede sem interferência.
 
 ### Pergunta 6.2
 > Tabela comparativa dos campos visíveis ao Fiddler em cada caso:
 
-| Campo                          | Visível em HTTP? | Visível em HTTPS (sem decriptação)? |
-|--------------------------------|------------------|-------------------------------------|
-| Método                         | [...]            | [...]                               |
-| URL completa (path + query)    | [...]            | [...]                               |
-| Cabeçalhos de request          | [...]            | [...]                               |
-| Corpo de request               | [...]            | [...]                               |
-| Status code                    | [...]            | [...]                               |
-| Cabeçalhos de response         | [...]            | [...]                               |
-| Corpo de response              | [...]            | [...]                               |
-| Host (via SNI, no `CONNECT`)   | [...]            | [...]                               |
-| IP e porta de destino          | [...]            | [...]                               |
+| Campo                           | Visível em HTTP? | Visível em HTTPS (sem decriptação)? |
+|---------------------------------|:----------------:|:-----------------------------------:|
+| Método                          | Sim              | Não (Aparece apenas o `CONNECT`)    |
+| URL completa (path + query)     | Sim              | Não (Vê-se apenas o Host)           |
+| Cabeçalhos de request           | Sim              | Não                                 |
+| Corpo de request               | Sim              | Não                                 |
+| Status code                     | Sim              | Não (Só o `200` do túnel established)|
+| Cabeçalhos de response          | Sim              | Não                                 |
+| Corpo de response               | Sim              | Não                                 |
+| Host (via SNI, no `CONNECT`)    | Sim              | Sim                                 |
+| IP e porta de destino           | Sim              | Sim                                 |
 
 ### Pergunta 6.3 (teórica)
 > O que você **veria** no Fiddler se tivesse privilégio de administrador e pudesse habilitar *Decrypt HTTPS traffic*? Indique telas/abas e justifique por que essa inspeção exige a instalação de um certificado raiz.
@@ -310,7 +310,13 @@ data={
 ### Pergunta 6.4
 > Por que a técnica de decriptação dos *debugging proxies* **não** funcionaria contra um usuário se um atacante a tentasse sem instalar o certificado?
 
-**Resposta:** [...]
+**Resposta:** Ao selecionar uma sessão que antes era um túnel CONNECT opaco, você passaria a ver:
+
+Aba Inspectors > Headers: Em vez de apenas o Host, você veria o método real (GET, POST, PUT), a URL completa com todos os parâmetros de query e todos os cabeçalhos de requisição e resposta (como Cookies e Authorization).
+
+Abas JSON / WebForms: Se você estivesse fazendo login em um site ou enviando dados, veria exatamente os nomes de usuário, senhas e tokens sendo enviados no corpo da requisição.
+
+Aba Inspectors > TextView / Raw: O conteúdo da página (HTML), scripts (JS) ou respostas de APIs que antes eram borrões binários tornam-se texto legível.
 
 ---
 
@@ -369,26 +375,32 @@ data={
 
 ```json
 {
-  "user-agent": "[valor forjado]"
+  "user-agent": "LaboratorioRedes/1.0 (Aluno ALEXANDRE)"
 }
 ```
 
 ### Pergunta 8.1
 > O servidor pode detectar que o `User-Agent` foi forjado? Discuta.
 
-**Resposta:** [...]
+**Resposta:** Tecnicamente, se o servidor olhar apenas para a string do cabeçalho User-Agent, ele não tem como saber que ela foi alterada, pois o HTTP aceita qualquer texto ali. No entanto, o servidor pode detectar a falsificação de forma indireta através de Fingerprinting:
+
+Diferenças de Comportamento: Cada navegador tem uma forma única de ordenar cabeçalhos ou gerenciar o cache. Se o User-Agent diz ser "iPhone", mas a ordem dos cabeçalhos é típica de um "Chrome no Windows", o servidor nota a inconsistência.
+
+Capacidades do Client: Através de JavaScript, o servidor pode checar propriedades da tela ou do motor de renderização. Se o JS detectar uma API que só existe no Chrome, mas o User-Agent alegar ser Safari, a fraude é exposta.
+
+TLS Fingerprint: Em conexões HTTPS, a maneira como o cliente inicia o aperto de mão (handshake) varia entre navegadores, permitindo identificar o software real antes mesmo do cabeçalho ser lido.
 
 ### Pergunta 8.2
 > Após editar a status-line de `200 OK` para `404 Not Found`, o que o navegador exibe? Comente o papel do proxy como MITM.
 
 **Captura de tela:** `evidencias/atv8_status_edit.png`
 
-**Resposta:** [...]
+**Resposta:** Após a alteração da status-line no Fiddler de 200 OK para 404 Not Found, o navegador exibe sua página de erro padrão para recursos não encontrados, apresentando a mensagem "Não foi possível encontrar a página deste httpbin.org" acompanhada do código de erro HTTP ERROR 404. É importante notar que, embora a URL na barra de endereços continue sendo a correta (httpbin.org/status/200), o conteúdo que deveria ser uma página de sucesso é substituído pela interface de erro do Chrome.
 
 ### Pergunta 8.3
 > Confirme que todos os breakpoints foram desabilitados.
 
-- [ ] Breakpoints desabilitados ao final (Shift+F11)
+- [X] Breakpoints desabilitados ao final (Shift+F11)
 
 ---
 
@@ -427,29 +439,36 @@ Location: [colar aqui]
 
 ### 7. Impacto prático de `Cache-Control: no-store`.
 
-[resposta]
+O cabeçalho no-store é a diretiva mais restritiva de cache. Na prática, ele impede que qualquer parte da requisição ou da resposta seja armazenada em armazenamento persistente (disco) ou volátil (memória) pelo navegador ou proxies intermediários. Isso força o navegador a realizar uma nova requisição completa ao servidor toda vez que o recurso for solicitado, garantindo que dados sensíveis não deixem rastros locais após a sessão ser encerrada.
 
 ### 8. Como um debugging proxy decifra HTTPS sem violar a criptografia, e por que isso exige cooperação do usuário (e por que, justamente, você não pôde executar essa etapa)?
 
-[resposta]
+O proxy utiliza uma técnica de Man-in-the-Middle (MitM) assistida. Ele intercepta a requisição, estabelece uma conexão segura própria com o servidor real e gera um certificado "falso" em tempo real para apresentar ao navegador. Isso não viola a criptografia, mas a "desvia" através do proxy.
+
+Cooperação do usuário: O navegador, por segurança, rejeita certificados não assinados por autoridades confiáveis. O usuário deve instalar manualmente o Certificado Raiz do Fiddler para que o sistema confie nessas "falsificações" controladas.
+
+Por que não executada: Esta etapa exige privilégios de administrador para alterar o repositório de certificados do sistema operacional, permissão que geralmente é restrita em máquinas de laboratório acadêmico para evitar riscos de segurança permanentes.
 
 ### 9. Exemplo de cabeçalho de request que o navegador envia automaticamente, sem a página pedir.
 
-[resposta]
+O cabeçalho User-Agent. Ele é enviado em todas as requisições para identificar a versão do navegador, o motor de renderização e o sistema operacional do cliente, permitindo que o servidor adapte o conteúdo (como servir uma versão móvel ou desktop) mesmo que o código da página não tenha solicitado essa identificação explicitamente. Outro exemplo comum é o Accept-Language.
 
 ### 10. Se fosse automatizar parte da inspeção mantendo o Fiddler como proxy, que abordagem usaria? Por quê?
 
-[resposta]
+A abordagem ideal seria o uso do FiddlerScript (baseado em JScript.NET) ou a interface FiddlerCore.
+
+Por quê: Essas ferramentas permitem programar regras automáticas para filtrar, modificar ou salvar sessões específicas assim que elas ocorrem. Por exemplo, é possível criar um script que salve automaticamente o corpo de todas as respostas com status 200 OK que contenham Content-Type: application/json, eliminando a necessidade de inspeção manual durante testes de carga ou auditorias de API.
 
 ### 11. (Exclusiva do Fluxo B) Três cabeçalhos de segurança que não aparecem ou não fazem sentido em respostas HTTP puro. Para cada um, o que aconteceria se enviado por um servidor HTTP? (Cite RFC 6797 para HSTS.)
 
 **Resposta:**
 
-| Cabeçalho | Comportamento esperado sobre HTTP | Referência |
-|-----------|-----------------------------------|-----------|
-| [...]     | [...]                             | [...]     |
-| [...]     | [...]                             | [...]     |
-| [...]     | [...]                             | [...]     |
+| Cabeçalho                           | Comportamento esperado sobre HTTP                                                                                               | Referência |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `Strict-Transport-Security`         | O navegador deve ignorar o cabeçalho se recebido por conexão insegura para evitar ataques de injeção.                           | RFC 6797   |
+| `Expect-CT`                         | Não é processado, pois serve para validar a Transparência de Certificados, que só existem em conexões TLS/SSL.                  | RFC 9163   |
+| `Secure` (atributo no `Set-Cookie`) | O cookie pode até ser definido, mas o navegador será impedido de enviá-lo de volta, pois ele só viaja em canais criptografados. | RFC 6265   |
+
 
 ---
 
