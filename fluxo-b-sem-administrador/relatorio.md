@@ -198,14 +198,15 @@ data={
 
 **Captura de tela (lista do Fiddler com as 7 sessões):** `evidencias/atv4_lista.png`
 
-#,Método,URL,Status-line,Content-Length / Transfer-Encoding,Body presente?
-1 | GET | .../status/200,HTTP/1.1 200 OK | Content-Length: 0 | Não
-2 | GET | .../redirect-to?status_code=301... | HTTP/1.1 301 MOVED PERMANENTLY | Content-Length: 0 | Não
-3 | GET | .../status/404 | HTTP/1.1 404 NOT FOUND | Content-Length: 0 | Não
-4 | GET | .../status/418 | HTTP/1.1 418 I'M A TEAPOT | Content-Length: 135 | Sim
-5 | GET | .../status/500 | HTTP/1.1 500 INTERNAL SERVER ERROR | Content-Length: 0 | Não
-6 | GET | .../status/503 | HTTP/1.1 503 SERVICE UNAVAILABLE | Content-Length: 0 | Não
-7 | GET | .../cache (+ headers) | HTTP/1.1 304 NOT MODIFIED | (Vazio / Não enviado) | Não
+| # | Método | URL                                        | Status-line                          | Content-Length / Transfer-Encoding | Body presente? |
+|---|--------|--------------------------------------------|--------------------------------------|-------------------------------------|----------------|
+| 1 | GET    | .../status/200                            | HTTP/1.1 200 OK                      | Content-Length: 0                   | Não            |
+| 2 | GET    | .../redirect-to?status_code=301...         | HTTP/1.1 301 MOVED PERMANENTLY       | Content-Length: 0                   | Não            |
+| 3 | GET    | .../status/404                            | HTTP/1.1 404 NOT FOUND               | Content-Length: 0                   | Não            |
+| 4 | GET    | .../status/418                            | HTTP/1.1 418 I'M A TEAPOT            | Content-Length: 135                 | Sim            |
+| 5 | GET    | .../status/500                            | HTTP/1.1 500 INTERNAL SERVER ERROR   | Content-Length: 0                   | Não            |
+| 6 | GET    | .../status/503                            | HTTP/1.1 503 SERVICE UNAVAILABLE     | Content-Length: 0                   | Não            |
+| 7 | GET    | .../cache (+ headers)                     | HTTP/1.1 304 NOT MODIFIED            | (Vazio / Não enviado)               | Não            |
 
 ### Pergunta 4.1
 > Em qual dos status o corpo está ausente/tamanho zero? Isso é obrigatório pela especificação ou depende do servidor?
